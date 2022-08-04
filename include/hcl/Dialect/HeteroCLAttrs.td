@@ -71,6 +71,18 @@ def CmpFixedPredicateAttr : I64EnumAttr<
   let cppNamespace = "mlir::hcl";
 }
 
+def CalcPredicateAttr : I32EnumAttr<
+  "CalcPredicate", "Predicate of calc statement", [
+    I32EnumAttrCase<"eq", 0>,
+    I32EnumAttrCase<"lt", 1>,
+    I32EnumAttrCase<"gt", 2>,
+    I32EnumAttrCase<"ne", 3>,
+    I32EnumAttrCase<"le", 4>,
+    I32EnumAttrCase<"ge", 5>,
+  ]> {
+  let cppNamespace = "mlir::hcl";
+}
+
 // def FooAttr : HeteroCL_Attr<"FooAttr"> {
 //   let mnemonic = "FooAttr";
 //   let parameters = (ins );

@@ -792,4 +792,125 @@ def StructGetOp : HeteroCL_Op<"struct_get", [NoSideEffect]> {
 
 }
 
+//===----------------------------------------------------------------------===//
+// Verification operations
+//===----------------------------------------------------------------------===//
+
+def FVRequireOp : HeteroCL_Op<"fv.require", [NoRegionArguments,
+    SingleBlockImplicitTerminator<"FVYieldOp">]> {
+  let summary = "Pre-condition operation";
+
+  let regions = (region SizedRegion<1>:$body);
+
+  let assemblyFormat = [{ attr-dict-with-keyword $body }];
+
+  // bit hasVerifier = 1;
+}
+
+def FVEnsureOp : HeteroCL_Op<"fv.ensure", [NoRegionArguments,
+    SingleBlockImplicitTerminator<"FVYieldOp">]> {
+  let summary = "Post-condition operation";
+
+  let regions = (region SizedRegion<1>:$body);
+
+  let assemblyFormat = [{ attr-dict-with-keyword $body }];
+
+  // bit hasVerifier = 1;
+}
+
+def FVInvariantOp : HeteroCL_Op<"fv.invariant", [NoRegionArguments,
+    SingleBlockImplicitTerminator<"FVYieldOp">]> {
+  let summary = "Loop invariant operation";
+
+  let regions = (region SizedRegion<1>:$body);
+
+  let assemblyFormat = [{ attr-dict-with-keyword $body }];
+
+  // bit hasVerifier = 1;
+}
+
+def FVAssertOp : HeteroCL_Op<"fv.assert", [NoRegionArguments,
+    SingleBlockImplicitTerminator<"FVYieldOp">]> {
+  let summary = "Assertion operation";
+
+  let regions = (region SizedRegion<1>:$body, SizedRegion<1>:$by);
+
+  let assemblyFormat = [{ attr-dict-with-keyword $body (`by` $by^)? }];
+
+  // bit hasVerifier = 1;
+}
+
+def FVEquationOp : HeteroCL_Op<"fv.equation", [NoRegionArguments,
+    SingleBlockImplicitTerminator<"FVYieldOp">, HasParent<"FVCalcOp">]> {
+  let summary = "Equation operation";
+
+  let regions = (region SizedRegion<1>:$body, SizedRegion<1>:$by);
+
+  let assemblyFormat = [{ attr-dict-with-keyword $body (`by` $by^)? }];
+
+  // bit hasVerifier = 1;
+}
+
+def FVCalcOp : HeteroCL_Op<"fv.calc", [NoRegionArguments,
+    SingleBlockImplicitTerminator<"FVYieldOp">]> {
+  let summary = "Calc operation";
+
+  let arguments = (ins CalcPredicateAttr:$predicate);
+  let regions = (region SizedRegion<1>:$body, SizedRegion<1>:$by);
+
+  let assemblyFormat = [{
+    $predicate attr-dict-with-keyword $body (`by` $by^)?
+  }];
+
+  // bit hasVerifier = 1;
+}
+
+def FVForAllOp : HeteroCL_Op<"fv.for_all", [
+    SingleBlockImplicitTerminator<"FVYieldOp">]> {
+  let summary = "For all operation";
+
+  let arguments = (ins Index:$lowerBound, Index:$upperBound);
+  let results = (outs I1:$result);
+  let regions = (region SizedRegion<1>:$body);
+
+  let assemblyFormat = [{
+    $lowerBound `to` $upperBound attr-dict-with-keyword $body
+  }];
+
+  let extraClassDeclaration = [{
+    Value getInductionVar() { return getBody()->getArgument(0); }
+
+    void setLowerBound(Value bound) { getOperation()->setOperand(0, bound); }
+    void setUpperBound(Value bound) { getOperation()->setOperand(1, bound); }
+  }];
+
+  // let hasVerifier = 1;
+  // let hasRegionVerifier = 1;
+}
+
+def FVByLemmaOp : HeteroCL_Op<"fv.by_lemma", [
+    DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
+  let summary = "Lemma operation";
+
+  let arguments = (ins FlatSymbolRefAttr:$lamma, Variadic<AnyType>:$inputs);
+
+  let assemblyFormat = [{ $lamma `(` $inputs `)` attr-dict `:` type($inputs) }];
+
+  // bit hasVerifier = 1;
+}
+
+def FVYieldOp : HeteroCL_Op<"fv.yield", [Terminator,
+    ParentOneOf<["FVRequireOp", "FVEnsureOp", "FVInvariantOp",
+                 "FVAssertOp", "FVCalcOp", "FVForAllOp"]>]> {
+  let summary = "Terminator of FV operations";
+
+  let arguments = (ins Variadic<AnyType>:$results);
+
+  let assemblyFormat = [{ $results attr-dict `:` type($results) }];
+
+  let builders = [ OpBuilder<(ins), "build($_builder, $_state, llvm::None);"> ];
+
+  // bit hasVerifier = 1;
+}
+
 #endif // HCL_OPS

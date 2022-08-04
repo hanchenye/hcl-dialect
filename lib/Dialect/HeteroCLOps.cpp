@@ -79,6 +79,11 @@ static void buildCmpFixedOp(OpBuilder &build, OperationState &result,
                       build.getI64IntegerAttr(static_cast<int64_t>(predicate)));
 }
 
+LogicalResult
+FVByLemmaOp::verifySymbolUses(SymbolTableCollection &symbolTable) {
+  return success();
+}
+
 } // namespace hcl
 } // namespace mlir
 
