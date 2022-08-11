@@ -1387,6 +1387,11 @@ class XOrOp(BinaryOp):
         super().__init__(arith.XOrIOp, lhs.dtype, lhs, rhs)
 
 
+class RequireOp(UnaryOp):
+    def __init__(self, val):
+        super().__init__(hcl_d.RequireOp, val.dtype, val)
+
+
 class NegOp(UnaryOp):
     def __init__(self, val):
         super().__init__(

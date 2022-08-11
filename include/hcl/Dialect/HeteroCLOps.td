@@ -792,4 +792,10 @@ def StructGetOp : HeteroCL_Op<"struct_get", [NoSideEffect]> {
 
 }
 
+def RequireOp : HeteroCL_Op<"fv.require", []> {
+    let summary = "formal verification precondition operation";
+    let arguments = (ins I1:$predicate);
+    let assemblyFormat = "$predicate attr-dict";
+}
+
 #endif // HCL_OPS

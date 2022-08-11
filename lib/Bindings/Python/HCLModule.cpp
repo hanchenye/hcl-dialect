@@ -211,8 +211,7 @@ PYBIND11_MODULE(_hcl, m) {
     PassManager pm(module.getContext());
     pm.addNestedPass<func::FuncOp>(createSimplifyAffineStructuresPass());
     pm.addPass(createCanonicalizerPass());
-    if (failed(pm.run(module)))
-      throw py::value_error("failed to apply the post-transform optimization");
+    (void)pm.run(module);
   });
 
   // Declare customized types and attributes
