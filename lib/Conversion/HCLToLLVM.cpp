@@ -11,6 +11,7 @@
 #include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
 #include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
@@ -195,6 +196,21 @@ private:
         loc,
         LLVM::LLVMPointerType::get(IntegerType::get(builder.getContext(), 8)),
         globalPtr, ArrayRef<Value>({cst0, cst0}));
+  }
+};
+
+class RequireOpLowering : public ConversionPattern {
+public:
+  explicit RequireOpLowering(MLIRContext *context)
+      : ConversionPattern(hcl::RequireOp::getOperationName(), 1, context) {}
+
+  LogicalResult
+  matchAndRewrite(Operation *op, ArrayRef<Value> operands,
+                  ConversionPatternRewriter &rewriter) const override {
+    rewriter.setInsertionPoint(op);
+    rewriter.replaceOpWithNewOp<cf::AssertOp>(
+        op, operands[0], rewriter.getStringAttr("requirement is not valid"));
+    return success();
   }
 };
 
@@ -435,13 +451,6 @@ bool applyHCLToLLVMLoweringPass(ModuleOp &module, MLIRContext &context) {
   populateAffineToStdConversionPatterns(patterns);
   populateSCFToControlFlowConversionPatterns(patterns);
 
-  populateMemRefToLLVMConversionPatterns(typeConverter, patterns);
-  arith::populateArithmeticToLLVMConversionPatterns(typeConverter, patterns);
-  populateMathToLLVMConversionPatterns(typeConverter, patterns);
-  populateFuncToLLVMConversionPatterns(typeConverter, patterns);
-  cf::populateControlFlowToLLVMConversionPatterns(typeConverter, patterns);
-  populateReconcileUnrealizedCastsPatterns(patterns);
-
   patterns.add<CreateLoopHandleOpLowering>(&context);
   patterns.add<CreateOpHandleOpLowering>(&context);
   patterns.add<PrintOpLowering>(&context);
@@ -449,6 +458,14 @@ bool applyHCLToLLVMLoweringPass(ModuleOp &module, MLIRContext &context) {
   patterns.add<GetIntBitOpLowering>(&context);
   patterns.add<SetIntSliceOpLowering>(&context);
   patterns.add<GetIntSliceOpLowering>(&context);
+  patterns.add<RequireOpLowering>(&context);
+
+  populateMemRefToLLVMConversionPatterns(typeConverter, patterns);
+  arith::populateArithmeticToLLVMConversionPatterns(typeConverter, patterns);
+  populateMathToLLVMConversionPatterns(typeConverter, patterns);
+  populateFuncToLLVMConversionPatterns(typeConverter, patterns);
+  cf::populateControlFlowToLLVMConversionPatterns(typeConverter, patterns);
+  populateReconcileUnrealizedCastsPatterns(patterns);
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.

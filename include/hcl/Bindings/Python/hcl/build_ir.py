@@ -534,10 +534,20 @@ class ExprOp(object):
             raise floating_point_error("Left shift")
         return self.generic_integer_op(LeftShiftOp, self, other)
 
+    def __rlshift__(self, other):
+        if isinstance(self, float) or isinstance(other, float):
+            raise floating_point_error("Left shift")
+        return self.generic_integer_op(LeftShiftOp, other, self)
+
     def __rshift__(self, other):
         if isinstance(self, float) or isinstance(other, float):
             raise floating_point_error("Right shift")
         return self.generic_integer_op(RightShiftOp, self, other)
+
+    def __rrshift__(self, other):
+        if isinstance(self, float) or isinstance(other, float):
+            raise floating_point_error("Right shift")
+        return self.generic_integer_op(RightShiftOp, other, self)
 
     def __and__(self, other):
         if isinstance(self, float) or isinstance(other, float):
